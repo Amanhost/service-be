@@ -1,58 +1,42 @@
-// const express = require("express");
-
-// const app = express();
-
-// app.listen(3000, () => {
-//   console.log("Server is rummomg on 3000");
-// });
-const http = require("http");
 const fs = require("fs");
-
-const index = fs.readFileSync("index.html", "utf-8");
 const product = fs.readFileSync("data.json", "utf-8");
-const products = JSON.parse(product).products;
+const updatedProduct = JSON.parse(product).products;
 
-const server = http.createServer((req, resp) => {
-  if (req.url.startsWith("/product")) {
-    const productId = req.url.split("/")[2];
-    const productDetails = products.find((p) => p.id === +productId);
-    console.log(productDetails);
-    console.log(productId);
+const exspress = require("express");
+const morgan = require("morgan"); //middleware for logging this is 3rd party middleware
+const app = exspress();
+// bodyparser
+app.use(exspress.json());
+// app.use(exspress.urlencoded({ extended: true }));
 
-    resp.setHeader("Content-Type", "text/html");
-    const updatedIndex = index
-      .replace("{{product}}", productDetails.title)
-      .replace("{{img}}", productDetails.images[0])
-      .replace("{{description}}", productDetails.description)
-      .replace("{{price}}", productDetails.price);
-    resp.end(updatedIndex);
-    return;
-  }
-  switch (req.url) {
-    case "/":
-      resp.setHeader("Content-Type", "text/html");
-      resp.end(index);
-      break;
-    case "/api":
-      resp.setHeader("Content-Type", "application/json");
-      resp.end(JSON.stringify(products));
-      break;
-      // case "/product":
-      //   resp.setHeader("Content-Type", "text/html");
-      //   const updatedIndex = index
-      //     .replace("{{product}}", products.title)
-      //     .replace("{{img}}", products.images)
-      //     .replace("{{description}}", products.description)
-      //     .replace("{{price}}", products.price);
-      //   resp.end(updatedIndex);
-      break;
-    default:
-      resp.writeHead(404, "notFOund");
-      resp.end();
-  }
-  // resp.setHeader("Content-Type", "application/json");
-  // resp.setHeader("Content-Type", "text/html");
-  // resp.end(index);
+// app.use(morgan("default")); //middleware for logging this is 3rd party middleware
+// app.use(exspress.static("public")); //static file serving,hoisting
+
+// application level middleware
+// app.use((req, res, next) => {
+//   console.log(req.hostname, new Date(), req.get("User-Agent"));
+//   next();
+// });
+
+// router-level middleware
+const auther = (req, res, next) => {
+  console.log("autherization");
+  // if (req.query.password === "123") {
+  //   next();
+  // }
+  // res.status(401).json({ message: "Unauthorized" });
+  next();
+};
+// app.use(auther);
+
+app.get("/product/:id", auther, (req, res) => {
+  console.log("params", req.params);
+  res.json(updatedProduct);
+});
+app.post("/", auther, (req, res) => {
+  res.json(updatedProduct);
 });
 
-server.listen(8080);
+app.listen(8080, () => {
+  // console.log("server is running on 8080");
+});
