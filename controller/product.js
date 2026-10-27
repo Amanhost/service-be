@@ -1,10 +1,22 @@
 const fs = require("fs");
+const { Product } = require("../model/productModel");
 
-const product = fs.readFileSync("data.json", "utf-8");
-const updatedProduct = JSON.parse(product).products;
-const getAllProducts = (req, res) => {
-  res.json(updatedProduct);
+const createProduct = async (req, res) => {
+  try {
+    const product = new Product();
+    product.title = "AMAN";
+    product.price = 1000;
+    product.rating = 4.5;
+    const savedProduct = await product.save();
+    res.status(201).json({
+      message: "Product created successfully",
+      data: savedProduct,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error saving product", error });
+  }
 };
+
 const getProductById = (req, res) => {
   const productId = req.params.id;
   const productDetails = updatedProduct.find((p) => p.id === +productId);
@@ -14,15 +26,10 @@ const getProductById = (req, res) => {
   res.json(productDetails);
 };
 
-const createProduct = (req, res) => {
-  updatedProduct.push(req.body);
-
-  res.json({
-    data: req.body,
-    status: 201,
-    message: "Product created successfully",
-  });
+const getAllProducts = (req, res) => {
+  res.json(updatedProduct);
 };
+
 const updateProduct = (req, resp) => {
   const productId = req.params.id;
   const productIndex = updatedProduct.findIndex((p) => p.id === +productId);

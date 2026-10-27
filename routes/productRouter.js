@@ -12,7 +12,7 @@ const {
 
 ProductRouter.get("/", getAllProducts)
   .get("/:id", getProductById)
-  .post("", createProduct)
+  .post("/", createProduct)
   .put("/:id", updateProduct)
   .patch("/:id", patchProduct)
   .delete("/:id", deleteProduct);
