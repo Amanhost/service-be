@@ -8,22 +8,49 @@ const { userRoute } = require("./routes/userRoute");
 const app = exspress();
 app.use(cors());
 app.use(exspress.json()); // bodyparser
+
+//dbconnection
+let dbConnection;
+function connectDB() {
+  if (!dbConnection) {
+    dbConnection = mongoose.connect(process.env.MONGODB_URI).catch((err) => {
+      dbConnection = null;
+      throw err;
+    });
+  }
+  return dbConnection;
+}
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("MongoDB connection failed:", err.message);
+    res.status(500).json({ message: "Database connection failed" });
+  }
+});
+
+app.get("/", (req, res) => {
+  res.json({ message: "API is running" });
+});
 app.use("/products", ProductRouter);
 app.use("/users", userRoute);
 
 const PORT = process.env.PORT || 8080;
-//dbconnection// getting-started.js
 
-async function main() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    app.listen(PORT, () => {
-      console.log("server is running on " + PORT);
+if (require.main === module) {
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log("server is running on " + PORT);
+      });
+    })
+    .catch((err) => {
+      console.error("MongoDB connection failed:", err.message);
+      process.exit(1);
     });
-  } catch (err) {
-    console.error("MongoDB connection failed:", err.message);
-    process.exit(1);
-  }
 }
-main();
+
+module.exports = app;
 //schema
