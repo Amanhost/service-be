@@ -1,72 +1,90 @@
-const fs = require("fs");
-const { Product } = require("../model/productModel");
+const { Products } = require("../model/productModel");
 
 const createProduct = async (req, res) => {
   try {
-    const product = new Product();
-    product.title = "AMAN";
-    product.price = 1000;
-    product.rating = 4.5;
+    const product = new Products(req.body);
     const savedProduct = await product.save();
     res.status(201).json({
       message: "Product created successfully",
       data: savedProduct,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error saving product", error });
+    res.status(500).json({ message: error.message });
   }
 };
 
-const getProductById = (req, res) => {
-  const productId = req.params.id;
-  const productDetails = updatedProduct.find((p) => p.id === +productId);
-  if (!productDetails) {
-    return res.status(404).json({ message: "Product not found" });
+const getProductById = async (req, res) => {
+  try {
+    const productDetails = await Products.findById(req.params.id);
+    if (!productDetails) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(productDetails);
+  } catch (error) {
+    res.status(400).json({ message: "Invalid product id", error });
   }
-  res.json(productDetails);
 };
 
-const getAllProducts = (req, res) => {
-  res.json(updatedProduct);
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await Products.find();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching products", error });
+  }
 };
 
-const updateProduct = (req, resp) => {
-  const productId = req.params.id;
-  const productIndex = updatedProduct.findIndex((p) => p.id === +productId);
-  // updatedProduct.splice(productIndex, 1, { ...req.body, id: +productId });
-  updatedProduct[productIndex] = { id: +productId, ...req.body };
-  resp.json({
-    data: req.body,
-    status: 201,
-    message: "Product updated successfully",
-  });
+const updateProduct = async (req, resp) => {
+  try {
+    const product = await Products.findOneAndReplace(
+      { _id: req.params.id },
+      req.body,
+      { returnDocument: "after" },
+    );
+    if (!product) {
+      return resp.status(404).json({ message: "Product not found" });
+    }
+    resp.json({
+      data: product,
+      status: 200,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    resp.status(400).json({ message: "Error updating product", error });
+  }
 };
 
-const patchProduct = (req, resp) => {
-  const productId = req.params.id;
-  const productIndex = updatedProduct.findIndex((p) => p.id === +productId);
-
-  // updatedProduct.splice(productIndex, 1, { ...req.body, id: +productId });
-  updatedProduct[productIndex] = {
-    id: +productId,
-    ...updatedProduct[productIndex],
-    ...req.body,
-  };
-  resp.json({
-    data: req.body,
-    status: 201,
-    message: "Product updated successfully",
-  });
+const patchProduct = async (req, resp) => {
+  try {
+    const product = await Products.findByIdAndUpdate(req.params.id, req.body, {
+      returnDocument: "after",
+    });
+    if (!product) {
+      return resp.status(404).json({ message: "Product not found" });
+    }
+    resp.json({
+      data: product,
+      status: 200,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    resp.status(400).json({ message: "Error updating product", error });
+  }
 };
 
-const deleteProduct = (req, resp) => {
-  const id = req.params.id;
-  const productIndex = updatedProduct.findIndex((p) => p.id === +id);
-  updatedProduct.splice(productIndex, 1);
-  resp.json({
-    status: 201,
-    message: "Product deleted successfully",
-  });
+const deleteProduct = async (req, resp) => {
+  try {
+    const product = await Products.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return resp.status(404).json({ message: "Product not found" });
+    }
+    resp.json({
+      status: 200,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    resp.status(400).json({ message: "Error deleting product", error });
+  }
 };
 
 module.exports = {
